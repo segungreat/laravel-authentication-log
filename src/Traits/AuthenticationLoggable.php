@@ -6,6 +6,18 @@ use Rappasoft\LaravelAuthenticationLog\Models\AuthenticationLog;
 
 trait AuthenticationLoggable
 {
+    /**
+     * The model is loggable.
+     *
+     * @var bool
+     */
+    //protected $loggable = FALSE;
+
+    public function isLoggable(): bool
+    {
+        return $this->loggable;
+    }
+
     public function authentications()
     {
         return $this->morphMany(AuthenticationLog::class, 'authenticatable')->latest('login_at');

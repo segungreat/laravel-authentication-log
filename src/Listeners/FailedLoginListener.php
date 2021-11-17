@@ -18,7 +18,18 @@ class FailedLoginListener
     public function handle(Failed $event): void
     {
         if ($event->user) {
-            $log = $event->user->authentications()->create([
+            $user = $event->user;
+            // Check if the model is loggable
+            if (!method_exists($user, 'isLoggable')){
+                return ;
+            }else{
+                if (!$user->isLoggable()){
+                    //dd('failed');
+                    return ;
+                }
+            }
+
+            $log = $user->authentications()->create([
                 'ip_address' => $ip = $this->request->ip(),
                 'user_agent' => $this->request->userAgent(),
                 'login_at' => now(),

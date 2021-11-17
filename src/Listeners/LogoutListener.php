@@ -19,6 +19,19 @@ class LogoutListener
     {
         if ($event->user) {
             $user = $event->user;
+
+            // Check if the model is loggable
+            if (!method_exists($user, 'isLoggable')){
+                return ;
+            }else{
+                if (!$user->isLoggable()){
+                    //dd('failed');
+                    return ;
+                }
+            }
+
+            //dd('pass');
+
             $ip = $this->request->ip();
             $userAgent = $this->request->userAgent();
             $log = $user->authentications()->whereIpAddress($ip)->whereUserAgent($userAgent)->orderByDesc('login_at')->first();
