@@ -3,8 +3,11 @@
 namespace Rappasoft\LaravelAuthenticationLog\Listeners;
 
 use Illuminate\Auth\Events\OtherDeviceLogout;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
+use Rappasoft\LaravelAuthenticationLog\Helpers\DeviceFingerprint;
 use Rappasoft\LaravelAuthenticationLog\Models\AuthenticationLog;
+use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
 
 class OtherDeviceLogoutListener
 {
@@ -15,27 +18,43 @@ class OtherDeviceLogoutListener
         $this->request = $request;
     }
 
-    public function handle($event): void
+    public function handle(OtherDeviceLogout $event): void
     {
-        $listener = config('authentication-log.events.other-device-logout', OtherDeviceLogout::class);
-        if (! $event instanceof $listener) {
-            return;
-        }
-
-        if ($event->user) {
+        if ($event->user instanceof Authenticatable) {
+            /** @var Authenticatable&\Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable $user */
             $user = $event->user;
-            $ip = $this->request->ip();
+
+            if (! in_array(AuthenticationLoggable::class, class_uses_recursive(get_class($user)))) {
+                return;
+            }
+
+            if (config('authentication-log.behind_cdn')) {
+                $ip = $this->request->server(config('authentication-log.behind_cdn.http_header_field'));
+            } else {
+                $ip = $this->request->ip();
+            }
+
             $userAgent = $this->request->userAgent();
-            $authenticationLog = $user->authentications()->whereIpAddress($ip)->whereUserAgent($userAgent)->first();
+            $deviceId = DeviceFingerprint::generate($this->request);
+
+            // Try to find by device_id first (more reliable), then fall back to IP+UA
+            $authenticationLog = $user->authentications()->fromDevice($deviceId)->first();
+
+            if (! $authenticationLog) {
+                // Note: authentications() relationship already orders by login_at DESC
+                $authenticationLog = $user->authentications()->fromIp($ip)->where('user_agent', $userAgent)->first();
+            }
 
             if (! $authenticationLog) {
                 $authenticationLog = new AuthenticationLog([
                     'ip_address' => $ip,
                     'user_agent' => $userAgent,
+                    'device_id' => $deviceId,
                 ]);
             }
 
-            foreach ($user->authentications()->whereLoginSuccessful(true)->get() as $log) {
+            // Clear all other active sessions
+            foreach ($user->authentications()->successful()->whereNull('logout_at')->get() as $log) {
                 if ($log->id !== $authenticationLog->id) {
                     $log->update([
                         'cleared_by_user' => true,

@@ -2,6 +2,103 @@
 
 All notable changes to `Laravel Authentication Log` will be documented in this file.
 
+### 6.1.2 - 2026-10-09
+
+#### Fixed
+- Generated device names now correctly identify Chrome, Firefox, Edge, and Opera on iOS, Chromium-based Edge and Opera, and Android devices (#148, thanks @lbeauvisage). Device fingerprints and existing stored names are unchanged.
+- Missing user agents now return the unknown browser and OS label without a PHP deprecation.
+
+#### Changed
+- Updated GitHub Actions and added PHP 8.5 to the test matrix.
+- Added support for Pest 5 while keeping Pest 3 and 4 available for older PHP versions.
+- Dependency resolution now defaults to stable releases. Laravel 11 CI allows only its known, unpatched upstream advisories in the temporary test installation.
+
+#### Compatibility
+- Laravel 11 compatibility is retained, but the framework is end of life and has unpatched security advisories. Production applications should use patched Laravel 12.69+ or 13.30+ releases. The test-only advisory exceptions do not disable Composer security blocking for applications using this package.
+
+### 6.1.1 - 2026-07-04
+
+#### Fixed
+- Session restoration detection now uses `last_activity_at` so continuously active sessions do not create duplicate login rows after the original `login_at` leaves the restoration window (#146)
+- Recent active legacy rows with a null `last_activity_at` still fall back to `login_at` during restoration detection
+
+### 6.1.0 - 2026-06-10
+
+#### Added
+- Laravel 13.x support (#138, #140)
+- Regression test covering applications that use immutable date casting
+
+#### Changed
+- `lastLoginAt()`, `lastSuccessfulLoginAt()`, and `previousLoginAt()` now return `\Carbon\CarbonInterface` instead of `\Illuminate\Support\Carbon`, fixing a `TypeError` in applications that cast model dates to `CarbonImmutable` — the default in the current Laravel starter kits (#137)
+- PHP 8.2+ is now required (PHP 8.1 is EOL, and no Laravel version supported by this package runs on it)
+- Modernized the PHPUnit configuration for PHPUnit 10+ and updated the CI matrix (PHP 8.2–8.4, Laravel 11.x–13.x)
+
+### 6.0.1 - 2025-12-08
+
+#### Fixed
+- The upgrade migration's `down()` method now respects the configured table name (#135, #136)
+
+### 6.0.0 - 2025-01-27
+
+#### Added
+- Suspicious activity detection with configurable thresholds
+- Comprehensive session management (view, revoke sessions)
+- Device fingerprinting with browser version normalization
+- Device trust management (trust/untrust devices)
+- Query scopes for filtering authentication logs (successful, failed, suspicious, trusted, active, etc.)
+- Statistics and insights methods (getLoginStats, getTotalLogins, etc.)
+- Rate limiting for notifications (prevent spam)
+- Middleware for device trust (RequireTrustedDevice)
+- Export functionality (CSV/JSON export command)
+- Webhook support for authentication events
+- Configurable new user threshold (prevent false positives)
+- Session restoration prevention (fixes duplicate log entries from page refreshes)
+- Arabic translation (ar.json)
+- Enhanced notifications with Vonage support
+
+#### Fixed
+- Issue #40: Browser version updates no longer trigger false "new device" notifications
+- Issue #13: Session restorations no longer create duplicate log entries
+
+#### Changed
+- Dropped Laravel 10.x support (now only supports Laravel 11.x and 12.x)
+- PHP 8.1+ required
+- Config defaults now check for geoip function existence
+- Improved device fingerprinting to normalize user agent strings
+
+#### Implemented Pull Requests
+- PR #15: Notification after failed login on new device
+- PR #52: Optimize Other Devices Logout Listener
+- PR #57: Use null safe/chaining operator
+- PR #80: Added PHPDocs for IDE autocompletion
+- PR #85: Configurable new user threshold
+- PR #92: Configurable listeners
+- PR #94: Check trait implementation
+- PR #100: Laravel 11 support
+- PR #115: Check if geoip is installed
+- PR #120: Laravel 12 support & Arabic translation
+- PR #125: Test configuration updates
+- PR #127: Spanish translation & blade fixes
+
+### 5.0.0 - 2024-XX-XX
+
+- Laravel 12 Support
+
+### 4.0.0 - 2024-03-28
+
+- Laravel 11 Support (https://github.com/rappasoft/laravel-authentication-log/pull/100)
+- Add config listeners (https://github.com/rappasoft/laravel-authentication-log/pull/92)
+- Use real user IP behind Cloudflare
+- Check for AuthenticationLoggable trait on event (https://github.com/rappasoft/laravel-authentication-log/pull/94)
+- Added PHPDocs to allow autocompletion in IDE (https://github.com/rappasoft/laravel-authentication-log/pull/80)
+- Fixes the down method for php artisan migrate:rollback (https://github.com/rappasoft/laravel-authentication-log/pull/93)
+
+### 3.0.0 - 2023-02-23
+
+- Laravel 10 Support - https://github.com/rappasoft/laravel-authentication-log/pull/70
+- Use null safe/chaining operator - https://github.com/rappasoft/laravel-authentication-log/pull/57
+- Optimize Other Devices Logout Listener - https://github.com/rappasoft/laravel-authentication-log/pull/52
+
 ### 2.0.0 - 2022-02-19
 
 ### Added
